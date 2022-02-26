@@ -9,7 +9,8 @@ tile_colour_black = (115, 85, 70)
 tile_colour_white = (235, 210, 180)
 
 random_fen = "7r/1P2p3/3bB2N/3K2pp/4P3/5PR1/kP2pP2/8 w - - 0 1"
-board = chess.Board(random_fen)
+board = chess.Board()
+global player
 
 
 def drawBoard():
@@ -17,9 +18,8 @@ def drawBoard():
         for y in range(0, 8):
             if (x + y) % 2 == 1:
                 pygame.draw.rect(display, tile_colour_black , pygame.Rect(x*(display_size_x/8), y*(display_size_y/8), display_size_x/8, display_size_y/8))
-
-
-board = chess.Board(random_fen)
+            if (x + y) % 2 == 0:
+                pygame.draw.rect(display, tile_colour_white , pygame.Rect(x*(display_size_x/8), y*(display_size_y/8), display_size_x/8, display_size_y/8))
 
 #Pieces:
 whitePawn = pygame.image.load("Python\Chess\PNG's\White_pawn.png")
@@ -55,6 +55,12 @@ def printFen():
         "column8" : splitString(fen_split[7])
     }
 
+    player = fen_split[8]
+    if player == "w":
+        player = "white"
+    else:
+        player = "black"
+
     for column in columns:
         for index, i in enumerate(columns[column]):
             if i.isdigit():
@@ -62,9 +68,6 @@ def printFen():
                 columns[column].pop(index)
                 for ii in range(j):
                     columns[column].insert(index+ii, " ")
-        print(columns[column])
-    
-    #kreeg t ff niet werkend met enumerate, fix later.
 
     for column_val, column in enumerate(columns):
         for index, j in enumerate(columns[column]):
@@ -105,16 +108,20 @@ def main():
     display.fill(tile_colour_white)
     drawBoard()
     printFen()
+    player = "white"
     running = True
 
+#Input is beetje garbo
     while running:
         pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.type == K_ESCAPE:
-                    running = False
+            if event.type == pygame.KEYDOWN:
+                move = str(input(f"{player} to make a move: "))
+                board.push_san(move)
+                drawBoard()
+                printFen()
             
 if __name__ == "__main__":
     main()
