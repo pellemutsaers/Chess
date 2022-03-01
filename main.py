@@ -21,19 +21,19 @@ def drawBoard():
     pygame.display.flip()
 
 #Pieces:
-whitePawn = pygame.image.load("Python\Chess\PNG's\White_pawn.png")
-whiteRook = pygame.image.load("Python\Chess\PNG's\White_rook.png")
-whiteKnight = pygame.image.load("Python\Chess\PNG's\White_knight.png")
-whiteBishop = pygame.image.load("Python\Chess\PNG's\White_bishop.png")
-whiteQueen = pygame.image.load("Python\Chess\PNG's\White_queen.png")
-whiteKing = pygame.image.load("Python\Chess\PNG's\White_king.png")
+whitePawn = pygame.image.load("PNG's\White_pawn.png")
+whiteRook = pygame.image.load("PNG's\White_rook.png")
+whiteKnight = pygame.image.load("PNG's\White_knight.png")
+whiteBishop = pygame.image.load("PNG's\White_bishop.png")
+whiteQueen = pygame.image.load("PNG's\White_queen.png")
+whiteKing = pygame.image.load("PNG's\White_king.png")
 
-blackPawn = pygame.image.load("Python\Chess\PNG's\Black_pawn.png")
-blackRook = pygame.image.load("Python\Chess\PNG's\Black_rook.png")
-blackKnight = pygame.image.load("Python\Chess\PNG's\Black_knight.png")
-blackBishop = pygame.image.load("Python\Chess\PNG's\Black_bishop.png")
-blackQueen = pygame.image.load("Python\Chess\PNG's\Black_queen.png")
-blackKing = pygame.image.load("Python\Chess\PNG's\Black_king.png")
+blackPawn = pygame.image.load("PNG's\Black_pawn.png")
+blackRook = pygame.image.load("PNG's\Black_rook.png")
+blackKnight = pygame.image.load("PNG's\Black_knight.png")
+blackBishop = pygame.image.load("PNG's\Black_bishop.png")
+blackQueen = pygame.image.load("PNG's\Black_queen.png")
+blackKing = pygame.image.load("PNG's\Black_king.png")
 
 def splitString(string):
     return [char for char in string]
