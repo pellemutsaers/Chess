@@ -1,17 +1,24 @@
-import pygame
-from pygame.locals import *
-import chess
+import pygame, chess
 
-display_size_x, display_size_y = 480, 480
+display_size_x, display_size_y = 480, 480 + 32
 pygame.init()
 display = pygame.display.set_mode((display_size_x, display_size_y))
-tile_colour_black = (105, 75, 60)
+tile_colour_black = (115, 85, 70)
 tile_colour_white = (235, 210, 180)
+base_font = pygame.font.Font(None, 32)
 
-random_fen = "8/8/p7/4n3/3K4/2BbN1k1/4Q3/4R3 w - - 0 1"
-board = chess.Board(random_fen)
+random_fen = "7r/1P2p3/3bB2N/3K2pp/4P3/5PR1/kP2pP2/8 w - - 0 1"
+drawn_fen = "8/8/8/8/8/6Q1/8/7k w - - 0 1"
+board = chess.Board()
 
-#board = chess.Board(random_fen)
+def drawBoard():
+    for x in range(0, 8):
+        for y in range(0, 8):
+            if (x + y) % 2 == 1:
+                pygame.draw.rect(display, tile_colour_black , pygame.Rect(x*(display_size_x/8), y*((display_size_y-32)/8), display_size_x/8, (display_size_y-32)/8))
+            if (x + y) % 2 == 0:
+                pygame.draw.rect(display, tile_colour_white , pygame.Rect(x*(display_size_x/8), y*((display_size_y-32)/8), display_size_x/8, (display_size_y-32)/8))
+    pygame.display.flip()
 
 #Pieces:
 whitePawn = pygame.image.load("Python\Chess\PNG's\White_pawn.png")
@@ -47,6 +54,7 @@ def printFen():
         "column8" : splitString(fen_split[7])
     }
 
+#Credit to GijsPeletier
     for column in columns:
         for index, i in enumerate(columns[column]):
             if i.isdigit():
@@ -54,30 +62,94 @@ def printFen():
                 columns[column].pop(index)
                 for ii in range(j):
                     columns[column].insert(index+ii, " ")
-        print(columns[column])
-        
-def drawBoard():
-    for x in range(0, 8):
-        for y in range(0, 8):
-            if (x + y) % 2 == 1:
-                pygame.draw.rect(display, tile_colour_black , pygame.Rect(x*(display_size_x/8), y*(display_size_y/8), display_size_x/8, display_size_y/8))
+#End of credit to GijsPeletier
+
+    for column_val, column in enumerate(columns):
+        for index, j in enumerate(columns[column]):
+            drawPieces(j, index, column_val)
+        pygame.display.flip()
+
+def drawPieces(string, index, column):
+    if string == " ":
+        pass
+    if string == "P":
+        display.blit(whitePawn, ((index)*60, (column)*60))
+    if string == "R":
+        display.blit(whiteRook, ((index)*60, (column)*60))
+    if string == "N":
+        display.blit(whiteKnight, ((index)*60, (column)*60))
+    if string == "B":
+        display.blit(whiteBishop, ((index)*60, (column)*60))
+    if string == "Q":
+        display.blit(whiteQueen, ((index)*60, (column)*60))
+    if string == "K":
+        display.blit(whiteKing, ((index)*60, (column)*60))
+    if string == "p":
+        display.blit(blackPawn, ((index)*60, (column)*60))
+    if string == "r":
+        display.blit(blackRook, ((index)*60, (column)*60))
+    if string == "n":
+        display.blit(blackKnight, ((index)*60, (column)*60))
+    if string == "b":
+        display.blit(blackBishop, ((index)*60, (column)*60))
+    if string == "q":
+        display.blit(blackQueen, ((index)*60, (column)*60))
+    if string == "k":
+        display.blit(blackKing, ((index)*60, (column)*60))
 
 def main():
     pygame.display.set_caption("Chess")
-    display.fill(tile_colour_white)
     drawBoard()
     printFen()
     running = True
+    clock = pygame.time.Clock()
+    user_text = ""
+    move = 0
 
     while running:
-        pygame.display.flip()
-        drawBoard()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.type == K_ESCAPE:
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
                     running = False
+
+                elif event.key == pygame.K_BACKSPACE:
+                    user_text = user_text[:-1]
+
+                elif event.key == pygame.K_SPACE:
+                    try:
+                        board.push_san(user_text)
+                    except:
+                        print("Illegal move")
+
+                    drawBoard()
+                    printFen()
+                    move += 1
+                    user_text = ""
+                    checkmate_status = board.is_checkmate()
+                    repetition_status = board.is_stalemate()
+                    insufficient_material_status = board.is_insufficient_material()
+
+                    if checkmate_status == True:
+                        if move % 2 == 1:
+                            user_text = "White won"
+                        else:
+                            user_text = "Black won"
+                    if repetition_status or insufficient_material_status:
+                        user_text = "Draw"
+
+                else:
+                    user_text += event.unicode
+        
+
+        pygame.draw.rect(display, (50, 50, 50) , pygame.Rect(0, 480, 480, 480 + 32))
+        text_surface = base_font.render(user_text, True, (255, 255, 255))
+        display.blit(text_surface, (0, 480 + 5))
+
+        pygame.display.flip()
+        clock.tick(30)
             
 if __name__ == "__main__":
     main()
