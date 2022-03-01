@@ -1,4 +1,4 @@
-import pygame, chess
+import pygame, chess, random
 
 display_size_x, display_size_y = 480, 480 + 32
 pygame.init()
@@ -102,54 +102,88 @@ def main():
     drawBoard()
     printFen()
     running = True
-    clock = pygame.time.Clock()
+    random_moves = True
     user_text = ""
-    move = 0
+    movenumber = 0
+    done = False
 
     while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+        if not random_moves:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
                     running = False
 
-                elif event.key == pygame.K_BACKSPACE:
-                    user_text = user_text[:-1]
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
 
-                elif event.key == pygame.K_SPACE:
-                    try:
-                        board.push_san(user_text)
-                    except:
-                        print("Illegal move")
+                    elif event.key == pygame.K_BACKSPACE:
+                        user_text = user_text[:-1]
 
-                    drawBoard()
-                    printFen()
-                    move += 1
-                    user_text = ""
-                    checkmate_status = board.is_checkmate()
-                    repetition_status = board.is_stalemate()
-                    insufficient_material_status = board.is_insufficient_material()
+                    elif event.key == pygame.K_SPACE:
+                        try:
+                            board.push_san(user_text)
+                        except:
+                            print("Illegal move")
 
-                    if checkmate_status == True:
-                        if move % 2 == 1:
-                            user_text = "White won"
-                        else:
-                            user_text = "Black won"
-                    if repetition_status or insufficient_material_status:
-                        user_text = "Draw"
+                        drawBoard()
+                        printFen()
+                        movenumber += 1
+                        user_text = ""
+                        checkmate_status = board.is_checkmate()
+                        repetition_status = board.is_stalemate()
+                        insufficient_material_status = board.is_insufficient_material()
 
-                else:
-                    user_text += event.unicode
+                        if checkmate_status == True:
+                            if movenumber % 2 == 1:
+                                user_text = "White won"
+                            else:
+                                user_text = "Black won"
+                        if repetition_status or insufficient_material_status:
+                            user_text = "Draw"
+
+                    else:
+                        user_text += event.unicode
         
+        if random_moves and not done:
+            movenumber += 1
+            legal_moves = str(board.legal_moves)
+            legal_moves = legal_moves.split(" ")[3::]
+            removetable = str.maketrans(" ", " ", "<(),>")
+            legal_moves = [s.translate(removetable) for s in legal_moves]
+            length = len(legal_moves)
+            index = random.randint(0, length-1)
+            move = legal_moves[index]
+
+            try:
+                board.push_san(move)
+            except:
+                done = True
+            
+            checkmate_status = board.is_checkmate()
+            repetition_status = board.is_stalemate()
+            insufficient_material_status = board.is_insufficient_material()
+
+            if checkmate_status == True:
+
+                if movenumber % 2 == 1:
+                    user_text = "White won"
+                    done = True
+                else:
+                    user_text = "Black won"
+                    done = True
+            if repetition_status or insufficient_material_status:
+                user_text = "Draw"
+                done = True            
+
+            drawBoard()
+            printFen()
 
         pygame.draw.rect(display, (50, 50, 50) , pygame.Rect(0, 480, 480, 480 + 32))
         text_surface = base_font.render(user_text, True, (255, 255, 255))
         display.blit(text_surface, (0, 480 + 5))
 
         pygame.display.flip()
-        clock.tick(30)
             
 if __name__ == "__main__":
     main()
