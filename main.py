@@ -1,4 +1,4 @@
-import pygame, chess, random
+import pygame, chess, random, time
 
 display_size_x, display_size_y = 480, 480 + 32
 pygame.init()
@@ -7,7 +7,7 @@ tile_colour_black = (115, 85, 70)
 tile_colour_white = (235, 210, 180)
 base_font = pygame.font.Font(None, 32)
 
-random_fen = "7r/1P2p3/3bB2N/3K2pp/4P3/5PR1/kP2pP2/8 w - - 0 1"
+random_fen = "7r/1P2p3/3bB2N/3K2pp/4P3/5PR1/kP2pP2/8 w KQkq - 0 1"
 drawn_fen = "8/8/8/8/8/6Q1/8/7k w - - 0 1"
 board = chess.Board()
 
@@ -42,7 +42,6 @@ def printFen():
     fen_split_on_slash = board.fen().split("/")
     fen_split = fen_split_on_slash[0:7] + fen_split_on_slash[7].split()
 
-    #column_fen:
     columns = {
         "column1" : splitString(fen_split[0]),
         "column2" : splitString(fen_split[1]),
@@ -62,6 +61,7 @@ def printFen():
                 columns[column].pop(index)
                 for ii in range(j):
                     columns[column].insert(index+ii, " ")
+        print(columns[column])
 #End of credit to GijsPeletier
 
     for column_val, column in enumerate(columns):
@@ -101,15 +101,30 @@ def main():
     pygame.display.set_caption("Chess")
     drawBoard()
     printFen()
+    time.sleep(1)
     running = True
-    random_moves = False
+    White_Is_Computer = False
+    Black_Is_Computer = True
     user_text = ""
     movenumber = 0
-    done = False
-    Clock = pygame.time.Clock()
+    Finished = False
 
     while running:
-        if not random_moves:
+        if movenumber % 2 == 0 and not White_Is_Computer:
+            Human_move = True
+            Computer_move = False
+        elif movenumber % 2 == 0 and White_Is_Computer:
+            Human_move = False
+            Computer_move = True
+        
+        if movenumber % 2 == 1 and not Black_Is_Computer:
+            Human_move = True
+            Computer_move = False
+        elif movenumber % 2 == 1 and Black_Is_Computer:
+            Human_move = False
+            Computer_move = True
+            
+        if Human_move and not Finished:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -122,14 +137,14 @@ def main():
                         user_text = user_text[:-1]
 
                     elif event.key == pygame.K_SPACE:
+
                         try:
                             board.push_san(user_text)
+                            movenumber += 1
                         except:
                             print("Illegal move")
-
                         drawBoard()
                         printFen()
-                        movenumber += 1
                         user_text = ""
                         checkmate_status = board.is_checkmate()
                         repetition_status = board.is_stalemate()
@@ -138,29 +153,34 @@ def main():
                         if checkmate_status == True:
                             if movenumber % 2 == 1:
                                 user_text = "White won"
+                                Finished = True
                             else:
                                 user_text = "Black won"
+                                Finished = True
                         if repetition_status or insufficient_material_status:
                             user_text = "Draw"
+                            Finished = True
 
                     else:
                         user_text += event.unicode
-        
-        if random_moves and not done:
-            movenumber += 1
+
+        if Computer_move and not Finished:
             legal_moves = str(board.legal_moves)
             legal_moves = legal_moves.split(" ")[3::]
             removetable = str.maketrans(" ", " ", "<(),>")
             legal_moves = [s.translate(removetable) for s in legal_moves]
             length = len(legal_moves)
-            index = random.randint(0, length-1)
-            move = legal_moves[index]
+            index = random.randint(0, length)
+            move = legal_moves[index-1]
 
             try:
                 board.push_san(move)
+                movenumber += 1
+                drawBoard()
+                printFen()
             except:
-                done = True
-            
+                Finished = True
+
             checkmate_status = board.is_checkmate()
             repetition_status = board.is_stalemate()
             insufficient_material_status = board.is_insufficient_material()
@@ -169,23 +189,27 @@ def main():
 
                 if movenumber % 2 == 1:
                     user_text = "White won"
-                    done = True
+                    Finished = True
                 else:
                     user_text = "Black won"
-                    done = True
+                    Finished = True
+
             if repetition_status or insufficient_material_status:
                 user_text = "Draw"
-                done = True 
-            Clock.tick(120)         
-
+                Finished = True
+                 
             drawBoard()
             printFen()
 
-        pygame.draw.rect(display, (50, 50, 50) , pygame.Rect(0, 480, 480, 480 + 32))
+        pygame.draw.rect(display, (50, 50, 50) , pygame.Rect(0, display_size_y-32, display_size_x, display_size_y))
         text_surface = base_font.render(user_text, True, (255, 255, 255))
-        display.blit(text_surface, (0, 480 + 5))
-
+        display.blit(text_surface, (0, display_size_y-32 + 5))
         pygame.display.flip()
+
+        if Finished:
+            closing = str(input("Press any button to close: "))
+            if type(closing) == str:
+                running = False
             
 if __name__ == "__main__":
     main()
