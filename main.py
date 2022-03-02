@@ -102,10 +102,11 @@ def main():
     drawBoard()
     printFen()
     running = True
-    random_moves = True
+    random_moves = False
     user_text = ""
     movenumber = 0
     done = False
+    Clock = pygame.time.Clock()
 
     while running:
         if not random_moves:
@@ -174,7 +175,8 @@ def main():
                     done = True
             if repetition_status or insufficient_material_status:
                 user_text = "Draw"
-                done = True            
+                done = True 
+            Clock.tick(120)         
 
             drawBoard()
             printFen()
