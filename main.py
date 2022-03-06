@@ -1,4 +1,4 @@
-import pygame, chess, random, time
+import pygame, chess, random, time, math
 
 display_size_x, display_size_y = 480, 480 + 32
 pygame.init()
@@ -6,8 +6,12 @@ display = pygame.display.set_mode((display_size_x, display_size_y))
 tile_colour_black = (115, 85, 70)
 tile_colour_white = (235, 210, 180)
 base_font = pygame.font.Font(None, 32)
+pygame.display.set_caption("Chess")
+search_depth = 1
+global movenumber
 
 random_fen = "7r/1P2p3/3bB2N/3K2pp/4P3/5PR1/kP2pP2/8 w KQkq - 0 1"
+chess960 = "qbbrnnkr/pppppppp/8/8/8/8/PPPPPPPP/QBBRNNKR b KQkq - 0 1"
 drawn_fen = "8/8/8/8/8/6Q1/8/7k w - - 0 1"
 board = chess.Board()
 
@@ -16,9 +20,9 @@ def drawBoard():
         for y in range(0, 8):
             if (x + y) % 2 == 1:
                 pygame.draw.rect(display, tile_colour_black , pygame.Rect(x*(display_size_x/8), y*((display_size_y-32)/8), display_size_x/8, (display_size_y-32)/8))
-            if (x + y) % 2 == 0:
+            elif (x + y) % 2 == 0:
                 pygame.draw.rect(display, tile_colour_white , pygame.Rect(x*(display_size_x/8), y*((display_size_y-32)/8), display_size_x/8, (display_size_y-32)/8))
-    pygame.display.flip()
+    #pygame.display.flip()
 
 #Pieces:
 whitePawn = pygame.image.load("PNG's\White_pawn.png")
@@ -38,7 +42,7 @@ blackKing = pygame.image.load("PNG's\Black_king.png")
 def splitString(string):
     return [char for char in string]
 
-def printFen():
+def printFen(print):
     fen_split_on_slash = board.fen().split("/")
     fen_split = fen_split_on_slash[0:7] + fen_split_on_slash[7].split()
 
@@ -61,50 +65,190 @@ def printFen():
                 columns[column].pop(index)
                 for ii in range(j):
                     columns[column].insert(index+ii, " ")
-        print(columns[column])
+#        print(columns[column])
 #End of credit to GijsPeletier
 
-    for column_val, column in enumerate(columns):
-        for index, j in enumerate(columns[column]):
-            drawPieces(j, index, column_val)
-        pygame.display.flip()
+    if print:
+        for column_val, column in enumerate(columns):
+            for index, j in enumerate(columns[column]):
+                drawPieces(j, index, column_val)
+            pygame.display.flip()
 
+#######
+
+
+
+def Evaluate(move, movehm, movenumber):
+    evaluation = 0
+    fen_split_on_slash = board.fen().split("/")
+    fen_split = fen_split_on_slash[0:7] + fen_split_on_slash[7].split()
+
+    columns = {
+        "column1" : splitString(fen_split[0]),
+        "column2" : splitString(fen_split[1]),
+        "column3" : splitString(fen_split[2]),
+        "column4" : splitString(fen_split[3]),
+        "column5" : splitString(fen_split[4]),
+        "column6" : splitString(fen_split[5]),
+        "column7" : splitString(fen_split[6]),
+        "column8" : splitString(fen_split[7])
+    }
+
+    for column in columns:
+        for index, i in enumerate(columns[column]):
+            if i.isdigit():
+                j = int(i)
+                columns[column].pop(index)
+                for ii in range(j):
+                    columns[column].insert(index+ii, " ")
+
+    for columnval, column in enumerate(columns):
+        for index, j in enumerate(columns[column]):
+            index += 1
+
+            if j == "R":
+                evaluation += 50
+                evaluation += 1.8 - 0.2*(columnval+1)
+
+            elif j == "N":
+                evaluation += 30
+                evaluation += 1.8 - 0.2*(columnval+1)
+                if index >= 3 or index <= 6:
+                    evaluation += 0.5
+
+            elif j == "B":
+                evaluation += 30
+                evaluation += 1.8 - 0.2*(columnval+1)
+
+            elif j == "Q":
+                evaluation += 90
+                evaluation += 1.8 - 0.2*(columnval+1)
+
+            elif j == "P":
+                evaluation += 10
+                evaluation += 1.8 - 0.2*(columnval+1)
+
+#-----------------------------------------------#
+            elif j == "r":
+                evaluation -= 50
+                evaluation -= 0.2*(columnval + 1)
+
+            elif j == "n":
+                evaluation -= 30
+                evaluation -= 0.2*(columnval + 1)
+                if index >= 3 or index <= 6:
+                    evaluation -= 0.5
+            
+            elif j == "b":
+                evaluation -= 30
+                evaluation -= 0.2*(columnval + 1)                
+
+            elif j == "q":
+                evaluation -= 90
+                evaluation -= 0.2*(columnval + 1)        
+
+            elif j == "p":
+                evaluation -= 10
+                evaluation -= 0.2*(columnval + 1)
+
+    if board.is_checkmate():
+        if movenumber % 2 == 0:
+            evaluation = 1000
+        else:
+            evaluation = -1000
+
+    if board.is_insufficient_material() or board.is_stalemate():
+        evaluation = 0
+
+    return evaluation
+
+
+def getLegalMoves():
+    legal_moves = str(board.legal_moves)
+    legal_moves = legal_moves.split(' ')[3::]
+    removetable = str.maketrans(" ", " ", "<>(),")
+    legal_moves = [s.translate(removetable) for s in legal_moves]
+    legal_moves1 = random.sample(legal_moves, len(legal_moves))
+    return legal_moves1
+
+def getMove(movenumber):
+
+    running = True
+
+    while running:
+        if movenumber % 2 == 0:
+            Evaluate("", "", movenumber)
+            legal_moves1 = getLegalMoves()
+            listOfEvals2 = []
+
+            for i in legal_moves1:
+                try:
+                    board.push_san(i)
+                except:
+                    running = False
+                legal_moves2 = getLegalMoves()
+                listOfEvals1 = []
+
+                for ii in legal_moves2:
+
+                    try:
+                        board.push_san(ii)
+                    except:
+                        running = False
+
+
+                    layer2 = Evaluate(ii, i, movenumber)
+
+                    listOfEvals1.append(layer2)
+                    board.pop()
+
+                listOfEvals2.append(min(listOfEvals1))
+
+                board.pop()
+            
+            best_move_white = legal_moves1[listOfEvals2.index(max(listOfEvals2))]
+            
+
+            running = False
+
+    print("------------------------")
+    return best_move_white
+                
 def drawPieces(string, index, column):
     if string == " ":
         pass
-    if string == "P":
+    elif string == "P":
         display.blit(whitePawn, ((index)*60, (column)*60))
-    if string == "R":
+    elif string == "R":
         display.blit(whiteRook, ((index)*60, (column)*60))
-    if string == "N":
+    elif string == "N":
         display.blit(whiteKnight, ((index)*60, (column)*60))
-    if string == "B":
+    elif string == "B":
         display.blit(whiteBishop, ((index)*60, (column)*60))
-    if string == "Q":
+    elif string == "Q":
         display.blit(whiteQueen, ((index)*60, (column)*60))
-    if string == "K":
+    elif string == "K":
         display.blit(whiteKing, ((index)*60, (column)*60))
-    if string == "p":
+    elif string == "p":
         display.blit(blackPawn, ((index)*60, (column)*60))
-    if string == "r":
+    elif string == "r":
         display.blit(blackRook, ((index)*60, (column)*60))
-    if string == "n":
+    elif string == "n":
         display.blit(blackKnight, ((index)*60, (column)*60))
-    if string == "b":
+    elif string == "b":
         display.blit(blackBishop, ((index)*60, (column)*60))
-    if string == "q":
+    elif string == "q":
         display.blit(blackQueen, ((index)*60, (column)*60))
-    if string == "k":
+    elif string == "k":
         display.blit(blackKing, ((index)*60, (column)*60))
 
 def main():
-    pygame.display.set_caption("Chess")
     drawBoard()
-    printFen()
-    time.sleep(1)
+    printFen(True)
+    time.sleep(0.5)
     running = True
-    White_Is_Computer = False
-    Black_Is_Computer = True
+    White_Is_Computer = True
+    Black_Is_Computer = False
     user_text = ""
     movenumber = 0
     Finished = False
@@ -143,8 +287,9 @@ def main():
                             movenumber += 1
                         except:
                             print("Illegal move")
+                        
                         drawBoard()
-                        printFen()
+                        printFen(True)
                         user_text = ""
                         checkmate_status = board.is_checkmate()
                         repetition_status = board.is_stalemate()
@@ -165,19 +310,13 @@ def main():
                         user_text += event.unicode
 
         if Computer_move and not Finished:
-            legal_moves = str(board.legal_moves)
-            legal_moves = legal_moves.split(" ")[3::]
-            removetable = str.maketrans(" ", " ", "<(),>")
-            legal_moves = [s.translate(removetable) for s in legal_moves]
-            length = len(legal_moves)
-            index = random.randint(0, length)
-            move = legal_moves[index-1]
+            move = getMove(movenumber)
 
             try:
                 board.push_san(move)
                 movenumber += 1
                 drawBoard()
-                printFen()
+                printFen(True)
             except:
                 Finished = True
 
@@ -199,7 +338,7 @@ def main():
                 Finished = True
                  
             drawBoard()
-            printFen()
+            printFen(True)
 
         pygame.draw.rect(display, (50, 50, 50) , pygame.Rect(0, display_size_y-32, display_size_x, display_size_y))
         text_surface = base_font.render(user_text, True, (255, 255, 255))
@@ -207,9 +346,8 @@ def main():
         pygame.display.flip()
 
         if Finished:
-            closing = str(input("Press any button to close: "))
-            if type(closing) == str:
-                running = False
+            closing = str(input("Enter anything to close "))
+            running = False
             
 if __name__ == "__main__":
     main()
