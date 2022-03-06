@@ -10,6 +10,7 @@ pygame.display.set_caption("Chess")
 search_depth = 1
 global movenumber
 
+
 random_fen = "7r/1P2p3/3bB2N/3K2pp/4P3/5PR1/kP2pP2/8 w KQkq - 0 1"
 chess960 = "qbbrnnkr/pppppppp/8/8/8/8/PPPPPPPP/QBBRNNKR b KQkq - 0 1"
 drawn_fen = "8/8/8/8/8/6Q1/8/7k w - - 0 1"
@@ -25,19 +26,19 @@ def drawBoard():
     #pygame.display.flip()
 
 #Pieces:
-whitePawn = pygame.image.load("PNG's\White_pawn.png")
-whiteRook = pygame.image.load("PNG's\White_rook.png")
-whiteKnight = pygame.image.load("PNG's\White_knight.png")
-whiteBishop = pygame.image.load("PNG's\White_bishop.png")
-whiteQueen = pygame.image.load("PNG's\White_queen.png")
-whiteKing = pygame.image.load("PNG's\White_king.png")
+whitePawn = pygame.image.load("PNGs/White_pawn.png")
+whiteRook = pygame.image.load("PNGs/White_rook.png")
+whiteKnight = pygame.image.load("PNGs/White_knight.png")
+whiteBishop = pygame.image.load("PNGs/White_bishop.png")
+whiteQueen = pygame.image.load("PNGs/White_queen.png")
+whiteKing = pygame.image.load("PNGs/White_king.png")
 
-blackPawn = pygame.image.load("PNG's\Black_pawn.png")
-blackRook = pygame.image.load("PNG's\Black_rook.png")
-blackKnight = pygame.image.load("PNG's\Black_knight.png")
-blackBishop = pygame.image.load("PNG's\Black_bishop.png")
-blackQueen = pygame.image.load("PNG's\Black_queen.png")
-blackKing = pygame.image.load("PNG's\Black_king.png")
+blackPawn = pygame.image.load("PNGs/Black_pawn.png")
+blackRook = pygame.image.load("PNGs/Black_rook.png")
+blackKnight = pygame.image.load("PNGs/Black_knight.png")
+blackBishop = pygame.image.load("PNGs/Black_bishop.png")
+blackQueen = pygame.image.load("PNGs/Black_queen.png")
+blackKing = pygame.image.load("PNGs/Black_king.png")
 
 def splitString(string):
     return [char for char in string]
@@ -252,21 +253,26 @@ def main():
     user_text = ""
     movenumber = 0
     Finished = False
+    WhiteToMove = True
 
     while running:
-        if movenumber % 2 == 0 and not White_Is_Computer:
-            Human_move = True
-            Computer_move = False
-        elif movenumber % 2 == 0 and White_Is_Computer:
-            Human_move = False
-            Computer_move = True
-        
-        if movenumber % 2 == 1 and not Black_Is_Computer:
-            Human_move = True
-            Computer_move = False
-        elif movenumber % 2 == 1 and Black_Is_Computer:
-            Human_move = False
-            Computer_move = True
+
+        if movenumber % 2 == 0:
+            WhiteToMove = True
+        else:
+            WhiteToMove = False
+        Human_move = False
+        Computer_move = False
+        if WhiteToMove:
+            if White_Is_Computer:
+                Computer_move = True
+            elif Black_Is_Computer:
+                Human_move = True
+        else:
+            if Black_Is_Computer:
+                Computer_move = True
+            elif White_Is_Computer:
+                Human_move = True
             
         if Human_move and not Finished:
             for event in pygame.event.get():
@@ -285,6 +291,7 @@ def main():
                         try:
                             board.push_san(user_text)
                             movenumber += 1
+                            printFen()
                         except:
                             print("Illegal move")
                         
@@ -296,11 +303,11 @@ def main():
                         insufficient_material_status = board.is_insufficient_material()
 
                         if checkmate_status == True:
-                            if movenumber % 2 == 1:
-                                user_text = "White won"
+                            if WhiteToMove:
+                                user_text = "Black won"
                                 Finished = True
                             else:
-                                user_text = "Black won"
+                                user_text = "White won"
                                 Finished = True
                         if repetition_status or insufficient_material_status:
                             user_text = "Draw"
@@ -326,11 +333,11 @@ def main():
 
             if checkmate_status == True:
 
-                if movenumber % 2 == 1:
-                    user_text = "White won"
+                if WhiteToMove:
+                    user_text = "Black won"
                     Finished = True
                 else:
-                    user_text = "Black won"
+                    user_text = "White won"
                     Finished = True
 
             if repetition_status or insufficient_material_status:
