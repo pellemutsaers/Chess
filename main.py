@@ -105,15 +105,14 @@ def main():
     printFen()
     time.sleep(1)
     running = True
-    White_Is_Computer = False
-    Black_Is_Computer = True
+    White_Is_Computer = True
+    Black_Is_Computer = False
     user_text = ""
     movenumber = 0
     Finished = False
     WhiteToMove = True
 
     while running:
-
         if movenumber % 2 == 0:
             WhiteToMove = True
         else:
@@ -148,11 +147,10 @@ def main():
                         try:
                             board.push_san(user_text)
                             movenumber += 1
-                            printFen()
                         except:
                             print("Illegal move")
-                        printFen()
                         drawBoard()
+                        printFen()
                         user_text = ""
                         checkmate_status = board.is_checkmate()
                         repetition_status = board.is_stalemate()
@@ -177,10 +175,6 @@ def main():
             legal_moves = legal_moves.split(" ")[3::]
             removetable = str.maketrans(" ", " ", "<(),>")
             legal_moves = [s.translate(removetable) for s in legal_moves]
-            print(legal_moves)
-            legal_moves2 = list(board.legal_moves)
-            legal_moves2 = legal_moves2[0]
-            print(legal_moves2)
             length = len(legal_moves)
             index = random.randint(0, length)
             move = legal_moves[index-1]
