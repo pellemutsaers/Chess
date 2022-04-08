@@ -14,8 +14,8 @@ random_fen = "7r/1P2p3/3bB2N/3K2pp/4P3/5PR1/kP2pP2/8 w KQkq - 0 1"
 random_fen2 = "rn1r2k1/pppq2pp/3b1n2/3Pp1N1/5pP1/2N2Q2/PPPP1P1P/R1B1R1K1 w - - 0 1"
 chess960 = "qbbrnnkr/pppppppp/8/8/8/8/PPPPPPPP/QBBRNNKR b KQkq - 0 1"
 drawn_fen = "8/8/8/8/8/6Q1/8/7k w - - 0 1"
-board = chess.Board()
-
+board = chess.Board("rnbqkbnr/ppp1pppp/8/3p4/8/2N5/PPPPPPPP/R1BQKBNR w KQkq d6 0 2")
+a = False
 def drawBoard():
     for x in range(0, 8):
         for y in range(0, 8):
@@ -25,19 +25,19 @@ def drawBoard():
                 pygame.draw.rect(display, tile_colour_white , pygame.Rect(x*(display_size_x/8), y*((display_size_y-32)/8), display_size_x/8, (display_size_y-32)/8))
 
 #Pieces:
-whitePawn = pygame.image.load("PNGs\White_pawn.png")
-whiteRook = pygame.image.load("PNGs\White_rook.png")
-whiteKnight = pygame.image.load("PNGs\White_knight.png")
-whiteBishop = pygame.image.load("PNGs\White_bishop.png")
-whiteQueen = pygame.image.load("PNGs\White_queen.png")
-whiteKing = pygame.image.load("PNGs\White_king.png")
+whitePawn = pygame.image.load("PNGs/White_pawn.png")
+whiteRook = pygame.image.load("PNGs/White_rook.png")
+whiteKnight = pygame.image.load("PNGs/White_knight.png")
+whiteBishop = pygame.image.load("PNGs/White_bishop.png")
+whiteQueen = pygame.image.load("PNGs/White_queen.png")
+whiteKing = pygame.image.load("PNGs/White_king.png")
 
-blackPawn = pygame.image.load("PNGs\Black_pawn.png")
-blackRook = pygame.image.load("PNGs\Black_rook.png")
-blackKnight = pygame.image.load("PNGs\Black_knight.png")
-blackBishop = pygame.image.load("PNGs\Black_bishop.png")
-blackQueen = pygame.image.load("PNGs\Black_queen.png")
-blackKing = pygame.image.load("PNGs\Black_king.png")
+blackPawn = pygame.image.load("PNGs/Black_pawn.png")
+blackRook = pygame.image.load("PNGs/Black_rook.png")
+blackKnight = pygame.image.load("PNGs/Black_knight.png")
+blackBishop = pygame.image.load("PNGs/Black_bishop.png")
+blackQueen = pygame.image.load("PNGs/Black_queen.png")
+blackKing = pygame.image.load("PNGs/Black_king.png")
 
 def splitString(string):
     return [char for char in string]
@@ -82,6 +82,13 @@ def printFen(print):
 
 #######
 
+def frmstr(n):
+    n = round(n,4)
+    s = f"{n:#05.5g}"
+    if "-" not in s:
+        s = " "+s
+    return s[0:6]
+
 def loadBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '#'):
     percent = ('{0:.' + str(decimals) + 'f}').format(100 * (iteration/float(total)))
     filledLength = int(length * iteration // total)
@@ -96,7 +103,6 @@ def Evaluate(movenumber):
     number_evals += 1
     fen_split_on_slash = board.fen().split("/")
     fen_split = fen_split_on_slash[0:7] + fen_split_on_slash[7].split()
-
     columns = {
         "column1" : splitString(fen_split[0]),
         "column2" : splitString(fen_split[1]),
@@ -199,18 +205,34 @@ def getLegalMoves():
 
 #---------------------------------------------------------#
 def minimax(depth, initial_depth, movenumber): 
+    global a
     if depth == 0: 
         return Evaluate(movenumber) 
-    
     if movenumber % 2 == 0: 
         maxEval = -float("inf") 
         legalmoves1 = getLegalMoves() 
-        if len(legalmoves1) != 0:
-            return Evaluate(movenumber)
+        if len(legalmoves1) != 0: 
+            for index, move in enumerate(legalmoves1): 
+                #if depth == initial_depth: 
+                    #loadBar(index + 1, len(legalmoves1), prefix = 'Progress:', suffix = 'Complete', length = 50) 
 
-        for index, move in enumerate(legalmoves1): 
-            if depth == initial_depth: 
-                loadBar(index + 1, len(legalmoves1), prefix = 'Progress:', suffix = 'Complete', length = 50) 
+                board.push_san(move) 
+                eval = minimax(depth - 1, initial_depth, movenumber + 1)
+                eval = round(eval, 3)
+                if depth == initial_depth:
+                    print(move, eval)
+                # if depth == initial_depth - 2 and a:
+                #     print("        "+move, eval)
+                # elif depth == initial_depth - 1:
+                #     print("    "+move, eval)
+                # elif depth == initial_depth - 2:
+                #     print("        "+move, eval)
+                # elif depth == initial_depth - 3:
+                #     print("            "+move, eval)
+                # elif depth == initial_depth - 4:
+                #     print("                "+move, eval)
+                if eval > maxEval and depth != initial_depth: 
+                    maxEval = eval 
 
             board.push_san(move) 
             eval = minimax(depth - 1, initial_depth, movenumber + 1)
@@ -224,9 +246,8 @@ def minimax(depth, initial_depth, movenumber):
                 board.pop() 
     
         if depth == initial_depth: 
-            print(f"Positions evaluated: {number_evals}, Evaluation: {round(maxEval, 2)}", end = "")
+            print(f"Positions evaluated: {number_evals}, Evaluation: {frmstr(maxEval)}", end = "")
             return best_move 
-
         else: 
             return maxEval 
 
@@ -236,11 +257,26 @@ def minimax(depth, initial_depth, movenumber):
 
         if len(legalmoves2) != 0: 
             for index, move in enumerate(legalmoves2): 
-                if depth == initial_depth: 
-                    loadBar(index + 1, len(legalmoves2), prefix = 'Progress:', suffix = 'Complete', length = 50) 
-
+                a = False
+                #if depth == initial_depth: 
+                    #loadBar(index + 1, len(legalmoves2), prefix = 'Progress:', suffix = 'Complete', length = 50) 
+                
+                if str(str(board.fen)[34:-3]) == "rnbqkbnr/ppp1pppp/8/3N4/8/8/PPPPPPPP/R1BQKBNR b KQkq - 0 2":
+                        a = True
                 board.push_san(move) 
-                eval = minimax(depth - 1, initial_depth, movenumber + 1) 
+                eval = minimax(depth - 1, initial_depth, movenumber + 1)
+                eval = round(eval, 3)
+                if depth == initial_depth:
+                    print(move, eval)
+                if depth == initial_depth - 1 and a:
+                    print("    "+move, eval)
+                
+                # elif depth == initial_depth - 2:
+                #     print("        "+move, eval)
+                # elif depth == initial_depth - 3:
+                #     print("            "+move, eval)
+                # elif depth == initial_depth - 4:
+                #     print("                "+move, eval) 
                 if eval < minEval and depth != initial_depth: 
                     minEval = eval 
 
@@ -253,7 +289,7 @@ def minimax(depth, initial_depth, movenumber):
             return Evaluate(movenumber) 
 
         if depth == initial_depth:
-            print(f"Positions evaluated: {number_evals}, Evaluation: {round(minEval, 2)}", end = "")
+            print(f"Positions evaluated: {number_evals}, Evaluation: {frmstr(minEval)}", end = "")
             return best_move
 
         else:
@@ -404,7 +440,7 @@ def main():
 
             start = time.time()
             move = minimax(depth, depth, movenumber)
-            print(f" in: {round(time.time() - start, 2)} seconds")
+            print(f" in: {frmstr(time.time() - start)} seconds")
 
             try:
                 board.push_san(move)
