@@ -1,4 +1,4 @@
-from xml.etree.ElementTree import TreeBuilder
+
 import pygame, chess, random, time, math
 
 display_size_x, display_size_y = 480, 480 + 32
@@ -388,9 +388,8 @@ def main():
                             movenumber += 1
                         except:
                             print("Illegal move")
-                        
                         drawBoard()
-                        printFen(True)
+                        printFen()
                         user_text = ""
                         checkmate_status = board.is_checkmate()
                         repetition_status = board.is_stalemate()
@@ -412,7 +411,13 @@ def main():
                         user_text += event.unicode
 
         if Computer_move and not Finished:
-            move = getMove(movenumber)
+            legal_moves = str(board.legal_moves)
+            legal_moves = legal_moves.split(" ")[3::]
+            removetable = str.maketrans(" ", " ", "<(),>")
+            legal_moves = [s.translate(removetable) for s in legal_moves]
+            length = len(legal_moves)
+            index = random.randint(0, length)
+            move = legal_moves[index-1]
 
             try:
                 board.push_san(move)
