@@ -1,5 +1,5 @@
-from xml.etree.ElementTree import TreeBuilder
 import pygame, chess, random, time, math
+from colorama import Fore
 
 display_size_x, display_size_y = 480, 480 + 32
 pygame.init()
@@ -8,11 +8,10 @@ tile_colour_black = (115, 85, 70)
 tile_colour_white = (235, 210, 180)
 base_font = pygame.font.Font(None, 32)
 pygame.display.set_caption("Chess")
-search_depth = 1
-global movenumber
-
+number_evals = 0
 
 random_fen = "7r/1P2p3/3bB2N/3K2pp/4P3/5PR1/kP2pP2/8 w KQkq - 0 1"
+random_fen2 = "rn1r2k1/pppq2pp/3b1n2/3Pp1N1/5pP1/2N2Q2/PPPP1P1P/R1B1R1K1 w - - 0 1"
 chess960 = "qbbrnnkr/pppppppp/8/8/8/8/PPPPPPPP/QBBRNNKR b KQkq - 0 1"
 drawn_fen = "8/8/8/8/8/6Q1/8/7k w - - 0 1"
 board = chess.Board()
@@ -24,7 +23,6 @@ def drawBoard():
                 pygame.draw.rect(display, tile_colour_black , pygame.Rect(x*(display_size_x/8), y*((display_size_y-32)/8), display_size_x/8, (display_size_y-32)/8))
             if (x + y) % 2 == 0: 
                 pygame.draw.rect(display, tile_colour_white , pygame.Rect(x*(display_size_x/8), y*((display_size_y-32)/8), display_size_x/8, (display_size_y-32)/8))
-    #pygame.display.flip()
 
 #Pieces:
 whitePawn = pygame.image.load("PNG's\White_pawn.png")
@@ -87,13 +85,15 @@ def printFen(print):
 def loadBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '#'):
     percent = ('{0:.' + str(decimals) + 'f}').format(100 * (iteration/float(total)))
     filledLength = int(length * iteration // total)
-    bar = fill * filledLength + '-' * (length - filledLength)
+    bar = fill * filledLength + '.' * (length - filledLength)
     print(f'\r{prefix} | {bar} | {percent} % {suffix}',end = '\r')
     if iteration == total:
         print()
 
 def Evaluate(movenumber):
     evaluation = 0
+    global number_evals
+    number_evals += 1
     fen_split_on_slash = board.fen().split("/")
     fen_split = fen_split_on_slash[0:7] + fen_split_on_slash[7].split()
 
@@ -108,173 +108,158 @@ def Evaluate(movenumber):
         "column8" : splitString(fen_split[7])
     }
 
-    for column in columns:
-        for index, i in enumerate(columns[column]):
-            if i.isdigit():
-                j = int(i)
+    for columnval, column in enumerate(columns):
+        for index, j in enumerate(columns[column]):
+            if j.isdigit():
+                j = int(j)
                 columns[column].pop(index)
                 for ii in range(j):
                     columns[column].insert(index+ii, " ")
 
-    for columnval, column in enumerate(columns):
-        for index, j in enumerate(columns[column]):
-            index += 1
+            try:
+                if j.isupper():
+                    if j == "R":
+                        evaluation += 5
+                        if columnval <= 4:
+                            evaluation += 1.8 - 0.2*(columnval+1)
 
-            if j == "R":
-                evaluation += 5
-                if columnval <= 4:
-                    evaluation += 1.8 - 0.2*(columnval+1)
+                    elif j == "K":
+                        if index < 3 or index > 6:
+                            evaluation += 1
 
-            elif j == "K":
-                if index < 3 or index > 6:
-                    evaluation += 1
+                    elif j == "N":
+                        evaluation += 3
+                        evaluation += 1.8 - 0.2*(columnval+1)
+                        if index >= 3 or index <= 6:
+                            evaluation += 0.5
 
-            elif j == "N":
-                evaluation += 3
-                evaluation += 1.8 - 0.2*(columnval+1)
-                if index >= 3 or index <= 6:
-                    evaluation += 0.5
+                    elif j == "B":
+                        evaluation += 3
+                        evaluation += 1.8 - 0.2*(columnval+1)
 
-            elif j == "B":
-                evaluation += 3
-                evaluation += 1.8 - 0.2*(columnval+1)
+                    elif j == "Q":
+                        evaluation += 9
+                        evaluation += 1.8 - 0.2*(columnval+1)
 
-            elif j == "Q":
-                evaluation += 9
-                evaluation += 1.8 - 0.2*(columnval+1)
+                    elif j == "P":
+                        evaluation += 1
+                        evaluation += 1.8 - 0.2*(columnval+1)
 
-            elif j == "P":
-                evaluation += 1
-                evaluation += 1.8 - 0.2*(columnval+1)
+                else:
+                    if j == "r":
+                        evaluation -= 5
+                        if columnval >= 3:
+                            evaluation -= 0.2*(columnval + 1)
 
-#-----------------------------------------------#
-            elif j == "r":
-                evaluation -= 5
-                if columnval >= 3:
-                    evaluation -= 0.2*(columnval + 1)
+                    elif j == "k":
+                        if index < 3 or index > 6:
+                            evaluation -= 1
 
-            elif j == "k":
-                if index < 3 or index > 6:
-                    evaluation -= 1
+                    elif j == "n":
+                        evaluation -= 3
+                        evaluation -= 0.2*(columnval + 1)
+                        if index >= 3 or index <= 6:
+                            evaluation -= 0.5
+                    
+                    elif j == "b":
+                        evaluation -= 3
+                        evaluation -= 0.2*(columnval + 1)                
 
-            elif j == "n":
-                evaluation -= 3
-                evaluation -= 0.2*(columnval + 1)
-                if index >= 3 or index <= 6:
-                    evaluation -= 0.5
-            
-            elif j == "b":
-                evaluation -= 3
-                evaluation -= 0.2*(columnval + 1)                
+                    elif j == "q":
+                        evaluation -= 9
+                        evaluation -= 0.2*(columnval + 1)        
 
-            elif j == "q":
-                evaluation -= 9
-                evaluation -= 0.2*(columnval + 1)        
-
-            elif j == "p":
-                evaluation -= 1
-                evaluation -= 0.2*(columnval + 1)
+                    elif j == "p":
+                        evaluation -= 1
+                        evaluation -= 0.2*(columnval + 1)
+            except:
+                pass
 
     if board.is_checkmate():
         if movenumber % 2 == 0:
-            evaluation = 1000
+            evaluation = float("inf")
         else:
-            evaluation = -1000
+            evaluation = -float("inf")
 
     if board.is_insufficient_material() or board.is_stalemate() or board.can_claim_threefold_repetition():
         evaluation = 0
 
     return evaluation
 
-
 def getLegalMoves():
     legal_moves = str(board.legal_moves).split(' ')[3::]
     removetable = str.maketrans(" ", " ", "<>(),")
     legal_moves = [s.translate(removetable) for s in legal_moves]
-    legal_moves1 = random.sample(legal_moves, len(legal_moves))
-    return legal_moves1
+    legal_moves = random.sample(legal_moves, len(legal_moves))
+    for index, item in enumerate(legal_moves):
+        if "x" in item:
+            legal_moves.pop(index)
+            legal_moves.insert(0, item)
+    return legal_moves
 
-def getMove(movenumber):
-    moves = 0
+#---------------------------------------------------------#
+def minimax(depth, initial_depth, movenumber): 
+    if depth == 0: 
+        return Evaluate(movenumber) 
+    
+    if movenumber % 2 == 0: 
+        maxEval = -float("inf") 
+        legalmoves1 = getLegalMoves() 
+        if len(legalmoves1) != 0: 
+            for index, move in enumerate(legalmoves1): 
+                if depth == initial_depth: 
+                    loadBar(index + 1, len(legalmoves1), prefix = 'Progress:', suffix = 'Complete', length = 50) 
 
-    running = True
+                board.push_san(move) 
+                eval = minimax(depth - 1, initial_depth, movenumber + 1)
+                if eval > maxEval and depth != initial_depth: 
+                    maxEval = eval 
 
-    while running:
-        if movenumber % 2 == 0:
-            Evaluate(movenumber)
-            legal_moves1 = getLegalMoves()
-            listOfEvals2 = []
+                elif eval > maxEval and depth == initial_depth: 
+                    maxEval = eval
+                    best_move = move 
 
-            for index, i in enumerate(legal_moves1):
-                try:
-                    board.push_san(i)
-                except:
-                    running = False
-                    break
-                legal_moves2 = getLegalMoves()
-                listOfEvals1 = []
+                board.pop() 
+        else: 
+            return Evaluate(movenumber) 
+    
+        if depth == initial_depth: 
+            print(f"Positions evaluated: {number_evals}, Evaluation: {round(maxEval, 4)}", end = "")
+            return best_move 
 
-                for ii in legal_moves2:
-                    moves +=1
-                    try:
-                        board.push_san(ii)
-                    except:
-                        running = False
-                        break
+        else: 
+            return maxEval 
 
-                    layer2 = Evaluate(ii, i, movenumber)
+    else: 
+        minEval = float("inf") 
+        legalmoves2 = getLegalMoves() 
 
-                    listOfEvals1.append(layer2)
-                    board.pop()
+        if len(legalmoves2) != 0: 
+            for index, move in enumerate(legalmoves2): 
+                if depth == initial_depth: 
+                    loadBar(index + 1, len(legalmoves2), prefix = 'Progress:', suffix = 'Complete', length = 50) 
 
-                listOfEvals2.append(min(listOfEvals1))
+                board.push_san(move) 
+                eval = minimax(depth - 1, initial_depth, movenumber + 1) 
+                if eval < minEval and depth != initial_depth: 
+                    minEval = eval 
 
-                board.pop()
-                loadBar(index + 1, len(legal_moves1), prefix = 'Progress:', suffix = 'Complete', length = 50)
+                elif eval < minEval and depth == initial_depth: 
+                    minEval = eval 
+                    best_move = move 
 
-            best_move = legal_moves1[listOfEvals2.index(max(listOfEvals2))]
-            print(max(listOfEvals2))
-            
-            running = False
+                board.pop() 
+            else: 
+                return Evaluate(movenumber) 
+
+        if depth == initial_depth:
+            print(f"Positions evaluated: {number_evals}, Evaluation: {round(minEval, 4)}", end = "")
+            return best_move
 
         else:
-            Evaluate(movenumber)
-            legal_moves1 = getLegalMoves()
-            listOfEvals2 = []
+            return minEval 
+#---------------------------------------------------------------#
 
-            for index, i in enumerate(legal_moves1):
-                try:
-                    board.push_san(i)
-                except:
-                    running = False
-                    break
-                legal_moves2 = getLegalMoves()
-                listOfEvals1 = []
-
-                for ii in legal_moves2:
-                    moves += 1
-                    try:
-                        board.push_san(ii)
-                    except:
-                        running = False
-                        break
-
-                    layer2 = -Evaluate(ii, i, movenumber)
-
-                    listOfEvals1.append(layer2)
-                    board.pop()
-
-                listOfEvals2.append(min(listOfEvals1))
-
-                board.pop()
-                loadBar(index + 1, len(legal_moves1), prefix = 'Progress:', suffix = 'Complete', length = 50)
-
-            best_move = legal_moves1[listOfEvals2.index(max(listOfEvals2))]
-            print(-max(listOfEvals2))
-            running = False
-    print(moves)
-    return best_move
-                
 def drawPieces(string, index, column):
     if string == " ":
         pass
@@ -314,6 +299,10 @@ def main():
     movenumber = 0
     Finished = False
     receiving = True
+    depth = 3
+    alpha = -float("inf")
+    beta = float("inf")
+    global number_evals
 
     while running:
         if movenumber % 2 == 0:
@@ -352,7 +341,7 @@ def main():
                         movenumber += 1
                         printFen(True)
                     except:
-                        print("Illegal move")
+                        print(Fore.RED + "Illegal move" + Fore.WHITE)
                     drawBoard()
                     printFen(True)
                     user_text = ""
@@ -387,7 +376,7 @@ def main():
                             board.push_san(user_text)
                             movenumber += 1
                         except:
-                            print("Illegal move")
+                            print(Fore.RED + "Illegal move" + Fore.WHITE)
                         
                         drawBoard()
                         printFen(True)
@@ -412,7 +401,10 @@ def main():
                         user_text += event.unicode
 
         if Computer_move and not Finished:
-            move = getMove(movenumber)
+
+            start = time.time()
+            move = minimax(depth, depth, movenumber)
+            print(f" in: {round(time.time() - start, 2)} seconds")
 
             try:
                 board.push_san(move)

@@ -1,4 +1,3 @@
-from xml.etree.ElementTree import TreeBuilder
 import pygame, chess, random, time, math
 
 display_size_x, display_size_y = 480, 480 + 32
@@ -8,11 +7,10 @@ tile_colour_black = (115, 85, 70)
 tile_colour_white = (235, 210, 180)
 base_font = pygame.font.Font(None, 32)
 pygame.display.set_caption("Chess")
-search_depth = 1
-global movenumber
-
+number_evals = 0
 
 random_fen = "7r/1P2p3/3bB2N/3K2pp/4P3/5PR1/kP2pP2/8 w KQkq - 0 1"
+random_fen2 = "rn1r2k1/pppq2pp/3b1n2/3Pp1N1/5pP1/2N2Q2/PPPP1P1P/R1B1R1K1 w - - 0 1"
 chess960 = "qbbrnnkr/pppppppp/8/8/8/8/PPPPPPPP/QBBRNNKR b KQkq - 0 1"
 drawn_fen = "8/8/8/8/8/6Q1/8/7k w - - 0 1"
 board = chess.Board()
@@ -93,7 +91,10 @@ def loadBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 1
         print()
 
 def Evaluate(movenumber):
+    start = time.time()
     evaluation = 0
+    global number_evals
+    number_evals += 1
     fen_split_on_slash = board.fen().split("/")
     fen_split = fen_split_on_slash[0:7] + fen_split_on_slash[7].split()
 
@@ -108,18 +109,16 @@ def Evaluate(movenumber):
         "column8" : splitString(fen_split[7])
     }
 
-    for column in columns:
-        for index, i in enumerate(columns[column]):
-            if i.isdigit():
-                j = int(i)
+    for columnval, column in enumerate(columns):
+        for index, j in enumerate(columns[column]):
+            if j.isdigit():
+                j = int(j)
                 columns[column].pop(index)
                 for ii in range(j):
                     columns[column].insert(index+ii, " ")
 
     for columnval, column in enumerate(columns):
         for index, j in enumerate(columns[column]):
-            index += 1
-
             if j == "R":
                 evaluation += 5
                 if columnval <= 4:
@@ -177,104 +176,90 @@ def Evaluate(movenumber):
 
     if board.is_checkmate():
         if movenumber % 2 == 0:
-            evaluation = 1000
+            evaluation = 100000
         else:
-            evaluation = -1000
+            evaluation = -100000
 
     if board.is_insufficient_material() or board.is_stalemate() or board.can_claim_threefold_repetition():
         evaluation = 0
 
+    print(time.time() - start)
     return evaluation
-
 
 def getLegalMoves():
     legal_moves = str(board.legal_moves).split(' ')[3::]
     removetable = str.maketrans(" ", " ", "<>(),")
     legal_moves = [s.translate(removetable) for s in legal_moves]
-    legal_moves1 = random.sample(legal_moves, len(legal_moves))
-    return legal_moves1
+    legal_moves = random.sample(legal_moves, len(legal_moves))
+    for index, item in enumerate(legal_moves):
+        if "x" in item:
+            legal_moves.pop(index)
+            legal_moves.insert(0, item)
+    return legal_moves
 
-def getMove(movenumber):
-    moves = 0
+#---------------------------------------------------------#
+def maxEval(depth, initial_depth, alpha, beta, movenumber):
+    if depth == 0:
+        return(Evaluate(movenumber))
 
-    running = True
+    maxpossible = -10000
+    legalmoves1 = getLegalMoves()
+    for index, move in enumerate(legalmoves1):
+        if depth == initial_depth:
+            loadBar(index + 1, len(legalmoves1), prefix = 'Progress:', suffix = 'Complete', length = 50)            
 
-    while running:
-        if movenumber % 2 == 0:
-            Evaluate(movenumber)
-            legal_moves1 = getLegalMoves()
-            listOfEvals2 = []
+        try:
+            board.push_san(move)
+        except:
+            break
+        score = minEval(depth - 1, initial_depth, alpha, beta, movenumber)
+        alpha = max(alpha, score)
+        if beta <= alpha:
+            break
 
-            for index, i in enumerate(legal_moves1):
-                try:
-                    board.push_san(i)
-                except:
-                    running = False
-                    break
-                legal_moves2 = getLegalMoves()
-                listOfEvals1 = []
+        board.pop()
+        if score > maxpossible and not depth == initial_depth:
+            maxpossible = score
+        elif score > maxpossible and depth == initial_depth:
+            maxpossible = score
+            best_move = move
 
-                for ii in legal_moves2:
-                    moves +=1
-                    try:
-                        board.push_san(ii)
-                    except:
-                        running = False
-                        break
+    if depth == initial_depth:
+        return best_move
+    else:
+        return maxpossible
 
-                    layer2 = Evaluate(ii, i, movenumber)
+def minEval(depth, initial_depth, alpha, beta, movenumber):
+    if depth == 0:
+        return(Evaluate(movenumber))
 
-                    listOfEvals1.append(layer2)
-                    board.pop()
+    minpossible = 10000
+    legalmoves2 = getLegalMoves()
+    for index, move in enumerate(legalmoves2):
+        if depth == initial_depth:
+            loadBar(index + 1, len(legalmoves2), prefix = 'Progress:', suffix = 'Complete', length = 50)            
 
-                listOfEvals2.append(min(listOfEvals1))
+        try:
+            board.push_san(move)
+        except:
+            break
+        score = maxEval(depth - 1, initial_depth, alpha, beta, movenumber)
+        beta = max(beta, score)
+        if beta <= alpha:
+            break
 
-                board.pop()
-                loadBar(index + 1, len(legal_moves1), prefix = 'Progress:', suffix = 'Complete', length = 50)
-
-            best_move = legal_moves1[listOfEvals2.index(max(listOfEvals2))]
-            print(max(listOfEvals2))
-            
-            running = False
-
-        else:
-            Evaluate(movenumber)
-            legal_moves1 = getLegalMoves()
-            listOfEvals2 = []
-
-            for index, i in enumerate(legal_moves1):
-                try:
-                    board.push_san(i)
-                except:
-                    running = False
-                    break
-                legal_moves2 = getLegalMoves()
-                listOfEvals1 = []
-
-                for ii in legal_moves2:
-                    moves += 1
-                    try:
-                        board.push_san(ii)
-                    except:
-                        running = False
-                        break
-
-                    layer2 = -Evaluate(ii, i, movenumber)
-
-                    listOfEvals1.append(layer2)
-                    board.pop()
-
-                listOfEvals2.append(min(listOfEvals1))
-
-                board.pop()
-                loadBar(index + 1, len(legal_moves1), prefix = 'Progress:', suffix = 'Complete', length = 50)
-
-            best_move = legal_moves1[listOfEvals2.index(max(listOfEvals2))]
-            print(-max(listOfEvals2))
-            running = False
-    print(moves)
-    return best_move
-                
+        board.pop()
+        if score < minpossible and not depth == initial_depth:
+            minpossible = score
+        elif score < minpossible and depth == initial_depth:
+            minpossible = score
+            best_move = move
+    
+    if depth == initial_depth:
+        return best_move
+    else:
+        return minpossible
+#---------------------------------------------------------------#
 def drawPieces(string, index, column):
     if string == " ":
         pass
@@ -314,6 +299,11 @@ def main():
     movenumber = 0
     Finished = False
     receiving = True
+    depth = 4
+    alpha = -float("inf")
+    beta = float("inf")
+    global number_evals
+
 
     while running:
         if movenumber % 2 == 0:
@@ -412,7 +402,19 @@ def main():
                         user_text += event.unicode
 
         if Computer_move and not Finished:
-            move = getMove(movenumber)
+
+            if movenumber % 2 == 0:
+                number_evals = 0
+                start = time.time()
+                move = maxEval(depth, depth, alpha, beta, movenumber)
+                print(time.time()- start)
+                print("positions evaluated:", number_evals)
+            else:
+                number_evals = 0
+                start = time.time()
+                move = minEval(depth, depth, alpha, beta, movenumber)
+                print(time.time() - start)
+                print("positions evaluated:", number_evals)
 
             try:
                 board.push_san(move)
