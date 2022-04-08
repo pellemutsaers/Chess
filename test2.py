@@ -25,19 +25,19 @@ def drawBoard():
                 pygame.draw.rect(display, tile_colour_white , pygame.Rect(x*(display_size_x/8), y*((display_size_y-32)/8), display_size_x/8, (display_size_y-32)/8))
 
 #Pieces:
-whitePawn = pygame.image.load("PNG's\White_pawn.png")
-whiteRook = pygame.image.load("PNG's\White_rook.png")
-whiteKnight = pygame.image.load("PNG's\White_knight.png")
-whiteBishop = pygame.image.load("PNG's\White_bishop.png")
-whiteQueen = pygame.image.load("PNG's\White_queen.png")
-whiteKing = pygame.image.load("PNG's\White_king.png")
+whitePawn = pygame.image.load("PNGs\White_pawn.png")
+whiteRook = pygame.image.load("PNGs\White_rook.png")
+whiteKnight = pygame.image.load("PNGs\White_knight.png")
+whiteBishop = pygame.image.load("PNGs\White_bishop.png")
+whiteQueen = pygame.image.load("PNGs\White_queen.png")
+whiteKing = pygame.image.load("PNGs\White_king.png")
 
-blackPawn = pygame.image.load("PNG's\Black_pawn.png")
-blackRook = pygame.image.load("PNG's\Black_rook.png")
-blackKnight = pygame.image.load("PNG's\Black_knight.png")
-blackBishop = pygame.image.load("PNG's\Black_bishop.png")
-blackQueen = pygame.image.load("PNG's\Black_queen.png")
-blackKing = pygame.image.load("PNG's\Black_king.png")
+blackPawn = pygame.image.load("PNGs\Black_pawn.png")
+blackRook = pygame.image.load("PNGs\Black_rook.png")
+blackKnight = pygame.image.load("PNGs\Black_knight.png")
+blackBishop = pygame.image.load("PNGs\Black_bishop.png")
+blackQueen = pygame.image.load("PNGs\Black_queen.png")
+blackKing = pygame.image.load("PNGs\Black_king.png")
 
 def splitString(string):
     return [char for char in string]
@@ -205,33 +205,33 @@ def minimax(depth, initial_depth, movenumber):
     if movenumber % 2 == 0: 
         maxEval = -float("inf") 
         legalmoves1 = getLegalMoves() 
-        if len(legalmoves1) != 0: 
-            for index, move in enumerate(legalmoves1): 
-                if depth == initial_depth: 
-                    loadBar(index + 1, len(legalmoves1), prefix = 'Progress:', suffix = 'Complete', length = 50) 
+        if len(legalmoves1) != 0:
+            return Evaluate(movenumber)
 
-                board.push_san(move) 
-                eval = minimax(depth - 1, initial_depth, movenumber + 1)
-                if eval > maxEval and depth != initial_depth: 
-                    maxEval = eval 
+        for index, move in enumerate(legalmoves1): 
+            if depth == initial_depth: 
+                loadBar(index + 1, len(legalmoves1), prefix = 'Progress:', suffix = 'Complete', length = 50) 
 
-                elif eval > maxEval and depth == initial_depth: 
-                    maxEval = eval
-                    best_move = move 
+            board.push_san(move) 
+            eval = minimax(depth - 1, initial_depth, movenumber + 1)
+            if eval > maxEval and depth != initial_depth: 
+                maxEval = eval 
+
+            elif eval > maxEval and depth == initial_depth: 
+                maxEval = eval
+                best_move = move 
 
                 board.pop() 
-        else: 
-            return Evaluate(movenumber) 
     
         if depth == initial_depth: 
-            print(f"Positions evaluated: {number_evals}, Evaluation: {round(maxEval, 4)}", end = "")
+            print(f"Positions evaluated: {number_evals}, Evaluation: {round(maxEval, 2)}", end = "")
             return best_move 
 
         else: 
             return maxEval 
 
-    else: 
-        minEval = float("inf") 
+    elif movenumber % 2 == 1:
+        minEval = float("inf")
         legalmoves2 = getLegalMoves() 
 
         if len(legalmoves2) != 0: 
@@ -249,11 +249,11 @@ def minimax(depth, initial_depth, movenumber):
                     best_move = move 
 
                 board.pop() 
-            else: 
-                return Evaluate(movenumber) 
+        else: 
+            return Evaluate(movenumber) 
 
         if depth == initial_depth:
-            print(f"Positions evaluated: {number_evals}, Evaluation: {round(minEval, 4)}", end = "")
+            print(f"Positions evaluated: {number_evals}, Evaluation: {round(minEval, 2)}", end = "")
             return best_move
 
         else:

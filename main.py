@@ -1,4 +1,3 @@
-
 import pygame, chess, random, time, math
 
 display_size_x, display_size_y = 480, 480 + 32

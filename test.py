@@ -25,19 +25,19 @@ def drawBoard():
     #pygame.display.flip()
 
 #Pieces:
-whitePawn = pygame.image.load("PNG's\White_pawn.png")
-whiteRook = pygame.image.load("PNG's\White_rook.png")
-whiteKnight = pygame.image.load("PNG's\White_knight.png")
-whiteBishop = pygame.image.load("PNG's\White_bishop.png")
-whiteQueen = pygame.image.load("PNG's\White_queen.png")
-whiteKing = pygame.image.load("PNG's\White_king.png")
+whitePawn = pygame.image.load("PNGs\White_pawn.png")
+whiteRook = pygame.image.load("PNGs\White_rook.png")
+whiteKnight = pygame.image.load("PNGs\White_knight.png")
+whiteBishop = pygame.image.load("PNGs\White_bishop.png")
+whiteQueen = pygame.image.load("PNGs\White_queen.png")
+whiteKing = pygame.image.load("PNGs\White_king.png")
 
-blackPawn = pygame.image.load("PNG's\Black_pawn.png")
-blackRook = pygame.image.load("PNG's\Black_rook.png")
-blackKnight = pygame.image.load("PNG's\Black_knight.png")
-blackBishop = pygame.image.load("PNG's\Black_bishop.png")
-blackQueen = pygame.image.load("PNG's\Black_queen.png")
-blackKing = pygame.image.load("PNG's\Black_king.png")
+blackPawn = pygame.image.load("PNGs\Black_pawn.png")
+blackRook = pygame.image.load("PNGs\Black_rook.png")
+blackKnight = pygame.image.load("PNGs\Black_knight.png")
+blackBishop = pygame.image.load("PNGs\Black_bishop.png")
+blackQueen = pygame.image.load("PNGs\Black_queen.png")
+blackKing = pygame.image.load("PNGs\Black_king.png")
 
 def splitString(string):
     return [char for char in string]
@@ -182,8 +182,6 @@ def Evaluate(movenumber):
 
     if board.is_insufficient_material() or board.is_stalemate() or board.can_claim_threefold_repetition():
         evaluation = 0
-
-    print(time.time() - start)
     return evaluation
 
 def getLegalMoves():
@@ -299,7 +297,7 @@ def main():
     movenumber = 0
     Finished = False
     receiving = True
-    depth = 4
+    depth = 2
     alpha = -float("inf")
     beta = float("inf")
     global number_evals
