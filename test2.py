@@ -14,8 +14,10 @@ random_fen = "7r/1P2p3/3bB2N/3K2pp/4P3/5PR1/kP2pP2/8 w KQkq - 0 1"
 random_fen2 = "rn1r2k1/pppq2pp/3b1n2/3Pp1N1/5pP1/2N2Q2/PPPP1P1P/R1B1R1K1 w - - 0 1"
 chess960 = "qbbrnnkr/pppppppp/8/8/8/8/PPPPPPPP/QBBRNNKR b KQkq - 0 1"
 drawn_fen = "8/8/8/8/8/6Q1/8/7k w - - 0 1"
-board = chess.Board("rnbqkbnr/ppp1pppp/8/3p4/8/2N5/PPPPPPPP/R1BQKBNR w KQkq d6 0 2")
+board = chess.Board()
+
 a = False
+
 def drawBoard():
     for x in range(0, 8):
         for y in range(0, 8):
@@ -119,15 +121,15 @@ def Evaluate(movenumber):
             if j.isdigit():
                 j = int(j)
                 columns[column].pop(index)
-                for ii in range(j):
-                    columns[column].insert(index+ii, " ")
+                for i in range(j):
+                    columns[column].insert(index + i, " ")
 
             try:
                 if j.isupper():
                     if j == "R":
                         evaluation += 5
                         if columnval <= 4:
-                            evaluation += 1.8 - 0.2*(columnval+1)
+                            evaluation += 0.9 - 0.1*(columnval+1)
 
                     elif j == "K":
                         if index < 3 or index > 6:
@@ -135,27 +137,27 @@ def Evaluate(movenumber):
 
                     elif j == "N":
                         evaluation += 3
-                        evaluation += 1.8 - 0.2*(columnval+1)
+                        evaluation += 0.9 - 0.1*(columnval+1)
                         if index >= 3 or index <= 6:
                             evaluation += 0.5
 
                     elif j == "B":
                         evaluation += 3
-                        evaluation += 1.8 - 0.2*(columnval+1)
+                        evaluation += 0.9 - 0.1*(columnval+1)
 
                     elif j == "Q":
                         evaluation += 9
-                        evaluation += 1.8 - 0.2*(columnval+1)
+                        evaluation += 0.9 - 0.1*(columnval+1)
 
                     elif j == "P":
                         evaluation += 1
-                        evaluation += 1.8 - 0.2*(columnval+1)
+                        evaluation += 0.9 - 0.1*(columnval+1)
 
                 else:
                     if j == "r":
                         evaluation -= 5
                         if columnval >= 3:
-                            evaluation -= 0.2*(columnval + 1)
+                            evaluation -= 0.1*(columnval+1)
 
                     elif j == "k":
                         if index < 3 or index > 6:
@@ -163,21 +165,21 @@ def Evaluate(movenumber):
 
                     elif j == "n":
                         evaluation -= 3
-                        evaluation -= 0.2*(columnval + 1)
+                        evaluation -= 0.1*(columnval+1)
                         if index >= 3 or index <= 6:
                             evaluation -= 0.5
                     
                     elif j == "b":
                         evaluation -= 3
-                        evaluation -= 0.2*(columnval + 1)                
+                        evaluation -= 0.1*(columnval+1)                
 
                     elif j == "q":
                         evaluation -= 9
-                        evaluation -= 0.2*(columnval + 1)        
+                        evaluation -= 0.1*(columnval+1)        
 
                     elif j == "p":
                         evaluation -= 1
-                        evaluation -= 0.2*(columnval + 1)
+                        evaluation -= 0.1*(columnval+1)
             except:
                 pass
 
@@ -204,47 +206,37 @@ def getLegalMoves():
     return legal_moves
 
 #---------------------------------------------------------#
-def minimax(depth, initial_depth, movenumber): 
-    global a
+def minimax(depth, initial_depth, movenumber, alpha, beta): 
     if depth == 0: 
         return Evaluate(movenumber) 
+
     if movenumber % 2 == 0: 
         maxEval = -float("inf") 
         legalmoves1 = getLegalMoves() 
-        if len(legalmoves1) != 0: 
+        if len(legalmoves1) != 0:
             for index, move in enumerate(legalmoves1): 
-                #if depth == initial_depth: 
-                    #loadBar(index + 1, len(legalmoves1), prefix = 'Progress:', suffix = 'Complete', length = 50) 
+                if move != "" or move != " " or move != "''":
+                    if depth == initial_depth: 
+                        loadBar(index + 1, len(legalmoves1), prefix = 'Progress:', suffix = 'Complete', length = 50) 
 
-                board.push_san(move) 
-                eval = minimax(depth - 1, initial_depth, movenumber + 1)
-                eval = round(eval, 3)
-                if depth == initial_depth:
-                    print(move, eval)
-                # if depth == initial_depth - 2 and a:
-                #     print("        "+move, eval)
-                # elif depth == initial_depth - 1:
-                #     print("    "+move, eval)
-                # elif depth == initial_depth - 2:
-                #     print("        "+move, eval)
-                # elif depth == initial_depth - 3:
-                #     print("            "+move, eval)
-                # elif depth == initial_depth - 4:
-                #     print("                "+move, eval)
-                if eval > maxEval and depth != initial_depth: 
-                    maxEval = eval 
+                    board.push_san(move) 
+                    eval = minimax(depth - 1, initial_depth, movenumber + 1, alpha, beta)
+                    alpha = max(alpha, eval)
 
-            board.push_san(move) 
-            eval = minimax(depth - 1, initial_depth, movenumber + 1)
-            if eval > maxEval and depth != initial_depth: 
-                maxEval = eval 
+                    if eval > maxEval and depth != initial_depth: 
+                        maxEval = eval
 
-            elif eval > maxEval and depth == initial_depth: 
-                maxEval = eval
-                best_move = move 
+                    if eval > maxEval and depth == initial_depth:
+                        maxEval = eval
+                        best_move = move
+                    if beta <= alpha and depth != initial_depth:
+                        board.pop()
+                        return maxEval
 
-                board.pop() 
-    
+                    board.pop() 
+        else:
+            return Evaluate(movenumber)
+
         if depth == initial_depth: 
             print(f"Positions evaluated: {number_evals}, Evaluation: {frmstr(maxEval)}", end = "")
             return best_move 
@@ -257,34 +249,26 @@ def minimax(depth, initial_depth, movenumber):
 
         if len(legalmoves2) != 0: 
             for index, move in enumerate(legalmoves2): 
-                a = False
-                #if depth == initial_depth: 
-                    #loadBar(index + 1, len(legalmoves2), prefix = 'Progress:', suffix = 'Complete', length = 50) 
-                
-                if str(str(board.fen)[34:-3]) == "rnbqkbnr/ppp1pppp/8/3N4/8/8/PPPPPPPP/R1BQKBNR b KQkq - 0 2":
-                        a = True
-                board.push_san(move) 
-                eval = minimax(depth - 1, initial_depth, movenumber + 1)
-                eval = round(eval, 3)
-                if depth == initial_depth:
-                    print(move, eval)
-                if depth == initial_depth - 1 and a:
-                    print("    "+move, eval)
-                
-                # elif depth == initial_depth - 2:
-                #     print("        "+move, eval)
-                # elif depth == initial_depth - 3:
-                #     print("            "+move, eval)
-                # elif depth == initial_depth - 4:
-                #     print("                "+move, eval) 
-                if eval < minEval and depth != initial_depth: 
-                    minEval = eval 
+                if move != "" or move != '' or move != "''":
+                    if depth == initial_depth: 
+                        loadBar(index + 1, len(legalmoves2), prefix = 'Progress:', suffix = 'Complete', length = 50)
+                    
+                    board.push_san(move)
+                    eval = minimax(depth - 1, initial_depth, movenumber + 1, alpha, beta)
+                    beta = min(beta, eval)
 
-                elif eval < minEval and depth == initial_depth: 
-                    minEval = eval 
-                    best_move = move 
+                    if eval < minEval and depth != initial_depth: 
+                        minEval = eval 
 
-                board.pop() 
+                    elif eval < minEval and depth == initial_depth: 
+                        minEval = eval 
+                        best_move = move
+
+                    if beta <= alpha and depth != initial_depth:
+                        board.pop()
+                        return minEval
+
+                    board.pop() 
         else: 
             return Evaluate(movenumber) 
 
@@ -335,7 +319,7 @@ def main():
     movenumber = 0
     Finished = False
     receiving = True
-    depth = 3
+    depth = 4
     alpha = -float("inf")
     beta = float("inf")
     global number_evals
@@ -439,7 +423,7 @@ def main():
         if Computer_move and not Finished:
 
             start = time.time()
-            move = minimax(depth, depth, movenumber)
+            move = minimax(depth, depth, movenumber, alpha, beta)
             print(f" in: {frmstr(time.time() - start)} seconds")
 
             try:
