@@ -213,13 +213,12 @@ def minimax(depth, initial_depth, movenumber, alpha, beta):
     if movenumber % 2 == 0: 
         maxEval = -float("inf") 
         legalmoves1 = getLegalMoves() 
-        if len(legalmoves1) != 0:
+        if board.legal_moves.count() != 0:
             for index, move in enumerate(legalmoves1): 
                 if move != "" or move != " " or move != "''":
                     if depth == initial_depth: 
                         loadBar(index + 1, len(legalmoves1), prefix = 'Progress:', suffix = 'Complete', length = 50) 
-
-                    board.push_san(move) 
+                    board.push_san(move)
                     eval = minimax(depth - 1, initial_depth, movenumber + 1, alpha, beta)
                     alpha = max(alpha, eval)
 
@@ -247,12 +246,11 @@ def minimax(depth, initial_depth, movenumber, alpha, beta):
         minEval = float("inf")
         legalmoves2 = getLegalMoves() 
 
-        if len(legalmoves2) != 0: 
+        if board.legal_moves.count() != 0: 
             for index, move in enumerate(legalmoves2): 
                 if move != "" or move != '' or move != "''":
                     if depth == initial_depth: 
                         loadBar(index + 1, len(legalmoves2), prefix = 'Progress:', suffix = 'Complete', length = 50)
-                    
                     board.push_san(move)
                     eval = minimax(depth - 1, initial_depth, movenumber + 1, alpha, beta)
                     beta = min(beta, eval)
@@ -319,7 +317,7 @@ def main():
     movenumber = 0
     Finished = False
     receiving = True
-    depth = 4
+    depth = 6
     alpha = -float("inf")
     beta = float("inf")
     global number_evals
