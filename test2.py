@@ -1,5 +1,7 @@
 import pygame, chess, random, time, math
 from colorama import Fore
+import chess.pgn
+import numpy as np
 
 display_size_x, display_size_y = 480, 480 + 32
 pygame.init()
@@ -15,8 +17,7 @@ random_fen2 = "rn1r2k1/pppq2pp/3b1n2/3Pp1N1/5pP1/2N2Q2/PPPP1P1P/R1B1R1K1 w - - 0
 chess960 = "qbbrnnkr/pppppppp/8/8/8/8/PPPPPPPP/QBBRNNKR b KQkq - 0 1"
 drawn_fen = "8/8/8/8/8/6Q1/8/7k w - - 0 1"
 board = chess.Board()
-
-a = False
+game = chess.pgn.Game()
 
 def drawBoard():
     for x in range(0, 8):
@@ -27,19 +28,19 @@ def drawBoard():
                 pygame.draw.rect(display, tile_colour_white , pygame.Rect(x*(display_size_x/8), y*((display_size_y-32)/8), display_size_x/8, (display_size_y-32)/8))
 
 #Pieces:
-whitePawn = pygame.image.load("PNGs/White_pawn.png")
-whiteRook = pygame.image.load("PNGs/White_rook.png")
-whiteKnight = pygame.image.load("PNGs/White_knight.png")
-whiteBishop = pygame.image.load("PNGs/White_bishop.png")
-whiteQueen = pygame.image.load("PNGs/White_queen.png")
-whiteKing = pygame.image.load("PNGs/White_king.png")
+whitePawn = pygame.image.load("PNG's\White_pawn.png")
+whiteRook = pygame.image.load("PNG's\White_rook.png")
+whiteKnight = pygame.image.load("PNG's\White_knight.png")
+whiteBishop = pygame.image.load("PNG's\White_bishop.png")
+whiteQueen = pygame.image.load("PNG's\White_queen.png")
+whiteKing = pygame.image.load("PNG's\White_king.png")
 
-blackPawn = pygame.image.load("PNGs/Black_pawn.png")
-blackRook = pygame.image.load("PNGs/Black_rook.png")
-blackKnight = pygame.image.load("PNGs/Black_knight.png")
-blackBishop = pygame.image.load("PNGs/Black_bishop.png")
-blackQueen = pygame.image.load("PNGs/Black_queen.png")
-blackKing = pygame.image.load("PNGs/Black_king.png")
+blackPawn = pygame.image.load("PNG's\Black_pawn.png")
+blackRook = pygame.image.load("PNG's\Black_rook.png")
+blackKnight = pygame.image.load("PNG's\Black_knight.png")
+blackBishop = pygame.image.load("PNG's\Black_bishop.png")
+blackQueen = pygame.image.load("PNG's\Black_queen.png")
+blackKing = pygame.image.load("PNG's\Black_king.png")
 
 def splitString(string):
     return [char for char in string]
@@ -82,8 +83,6 @@ def printFen(print):
                 drawPieces(j, index, column_val)
             pygame.display.flip()
 
-#######
-
 def frmstr(n):
     n = round(n,4)
     s = f"{n:#05.5g}"
@@ -99,98 +98,116 @@ def loadBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 1
     if iteration == total:
         print()
 
+def distanceFromCenter(row, column):
+    row -= 0.5
+    column += 0.5
+    distX = 4 - row
+    distY = 4 - column
+    distance = math.sqrt(math.pow(distX, 2)+ math.pow(distY, 2))
+    return distance
+
+
 def Evaluate(movenumber):
     evaluation = 0
     global number_evals
     number_evals += 1
-    fen_split_on_slash = board.fen().split("/")
-    fen_split = fen_split_on_slash[0:7] + fen_split_on_slash[7].split()
-    columns = {
-        "column1" : splitString(fen_split[0]),
-        "column2" : splitString(fen_split[1]),
-        "column3" : splitString(fen_split[2]),
-        "column4" : splitString(fen_split[3]),
-        "column5" : splitString(fen_split[4]),
-        "column6" : splitString(fen_split[5]),
-        "column7" : splitString(fen_split[6]),
-        "column8" : splitString(fen_split[7])
-    }
-
-    for columnval, column in enumerate(columns):
-        for index, j in enumerate(columns[column]):
-            if j.isdigit():
-                j = int(j)
-                columns[column].pop(index)
-                for i in range(j):
-                    columns[column].insert(index + i, " ")
-
-            try:
-                if j.isupper():
-                    if j == "R":
-                        evaluation += 5
-                        if columnval <= 4:
-                            evaluation += 0.9 - 0.1*(columnval+1)
-
-                    elif j == "K":
-                        if index < 3 or index > 6:
-                            evaluation += 1
-
-                    elif j == "N":
-                        evaluation += 3
-                        evaluation += 0.9 - 0.1*(columnval+1)
-                        if index >= 3 or index <= 6:
-                            evaluation += 0.5
-
-                    elif j == "B":
-                        evaluation += 3
-                        evaluation += 0.9 - 0.1*(columnval+1)
-
-                    elif j == "Q":
-                        evaluation += 9
-                        evaluation += 0.9 - 0.1*(columnval+1)
-
-                    elif j == "P":
-                        evaluation += 1
-                        evaluation += 0.9 - 0.1*(columnval+1)
-
-                else:
-                    if j == "r":
-                        evaluation -= 5
-                        if columnval >= 3:
-                            evaluation -= 0.1*(columnval+1)
-
-                    elif j == "k":
-                        if index < 3 or index > 6:
-                            evaluation -= 1
-
-                    elif j == "n":
-                        evaluation -= 3
-                        evaluation -= 0.1*(columnval+1)
-                        if index >= 3 or index <= 6:
-                            evaluation -= 0.5
-                    
-                    elif j == "b":
-                        evaluation -= 3
-                        evaluation -= 0.1*(columnval+1)                
-
-                    elif j == "q":
-                        evaluation -= 9
-                        evaluation -= 0.1*(columnval+1)        
-
-                    elif j == "p":
-                        evaluation -= 1
-                        evaluation -= 0.1*(columnval+1)
-            except:
-                pass
-
     if board.is_checkmate():
         if movenumber % 2 == 0:
-            evaluation = float("inf")
+            evaluation = -1000
         else:
-            evaluation = -float("inf")
+            evaluation = 1000
 
-    if board.is_insufficient_material() or board.is_stalemate() or board.can_claim_threefold_repetition():
+    elif board.is_insufficient_material() or board.is_stalemate() or board.can_claim_threefold_repetition():
         evaluation = 0
+
+    else:
+        fen_split_on_slash = board.fen().split("/")
+        fen_split = fen_split_on_slash[0:7] + fen_split_on_slash[7].split()
+        columns = {
+            "column1" : splitString(fen_split[0]),
+            "column2" : splitString(fen_split[1]),
+            "column3" : splitString(fen_split[2]),
+            "column4" : splitString(fen_split[3]),
+            "column5" : splitString(fen_split[4]),
+            "column6" : splitString(fen_split[5]),
+            "column7" : splitString(fen_split[6]),
+            "column8" : splitString(fen_split[7])
+        }
+
+        for columnval, column in enumerate(columns):
+            for index, j in enumerate(columns[column]):
+                if j.isdigit():
+                    j = int(j)
+                    columns[column].pop(index)
+                    for i in range(j):
+                        columns[column].insert(index + i, " ")
+
+                try:
+                    index += 1
+                    if j.isupper():
+                        if j == "R":
+                            evaluation += 5
+                            if columnval <= 4:
+                                evaluation += 0.9 - 0.1*(columnval+1)
+
+                        elif j == "K":
+                            if index < 3 or index > 6:
+                                evaluation += 1
+                            if movenumber > 50:
+                                distance = distanceFromCenter(index, columnval)
+                                print(distance)
+                                evaluation -= distance / 4
+
+                        elif j == "N":
+                            evaluation += 3
+                            evaluation += 0.9 - 0.1*(columnval+1)
+                            if index >= 3 or index <= 6:
+                                evaluation += 0.5
+
+                        elif j == "B":
+                            evaluation += 3
+                            evaluation += 0.9 - 0.1*(columnval+1)
+
+                        elif j == "Q":
+                            evaluation += 9
+                            evaluation += 0.9 - 0.1*(columnval+1)
+
+                        elif j == "P":
+                            evaluation += 1
+                            evaluation += 0.9 - 0.1*(columnval+1)
+
+                    else:
+                        if j == "r":
+                            evaluation -= 5
+                            if columnval >= 3:
+                                evaluation -= 0.1*(columnval+1)
+
+                        elif j == "k":
+                            if index < 3 or index > 6:
+                                evaluation -= 1
+                            if movenumber > 50:
+                                distance = distanceFromCenter(index, columnval)
+                                evaluation += distance / 4
+
+                        elif j == "n":
+                            evaluation -= 3
+                            evaluation -= 0.1*(columnval+1)
+                            if index >= 3 or index <= 6:
+                                evaluation -= 0.5
+                        
+                        elif j == "b":
+                            evaluation -= 3
+                            evaluation -= 0.1*(columnval+1)                
+
+                        elif j == "q":
+                            evaluation -= 9
+                            evaluation -= 0.1*(columnval+1)        
+
+                        elif j == "p":
+                            evaluation -= 1
+                            evaluation -= 0.1*(columnval+1)
+                except:
+                    pass
 
     return evaluation
 
@@ -212,68 +229,65 @@ def minimax(depth, initial_depth, movenumber, alpha, beta):
 
     if movenumber % 2 == 0: 
         maxEval = -float("inf") 
-        legalmoves1 = getLegalMoves() 
-        if len(legalmoves1) != 0:
+        legalmoves1 = getLegalMoves()
+        if board.legal_moves.count() != 0:
             for index, move in enumerate(legalmoves1): 
-                if move != "" or move != " " or move != "''":
-                    if depth == initial_depth: 
-                        loadBar(index + 1, len(legalmoves1), prefix = 'Progress:', suffix = 'Complete', length = 50) 
 
-                    board.push_san(move) 
-                    eval = minimax(depth - 1, initial_depth, movenumber + 1, alpha, beta)
-                    alpha = max(alpha, eval)
+                if depth == initial_depth: 
+                    loadBar(index + 1, len(legalmoves1), prefix = 'Progress:', suffix = 'Complete', length = 50) 
+                board.push_san(move)
+                eval = minimax(depth - 1, initial_depth, movenumber + 1, alpha, beta)
+                alpha = max(alpha, eval)
 
-                    if eval > maxEval and depth != initial_depth: 
-                        maxEval = eval
+                if eval > maxEval and depth != initial_depth: 
+                    maxEval = eval
 
-                    if eval > maxEval and depth == initial_depth:
-                        maxEval = eval
-                        best_move = move
-                    if beta <= alpha and depth != initial_depth:
-                        board.pop()
-                        return maxEval
+                if eval > maxEval and depth == initial_depth:
+                    maxEval = eval
+                    best_move = move
+                if beta <= alpha:
+                    board.pop()
+                    return maxEval
 
-                    board.pop() 
+                board.pop() 
         else:
             return Evaluate(movenumber)
 
         if depth == initial_depth: 
-            print(f"Positions evaluated: {number_evals}, Evaluation: {frmstr(maxEval)}", end = "")
+            print(f"Positions evaluated: {number_evals}, Evaluation: {frmstr(maxEval)}, depth: {initial_depth}", end = "")
             return best_move 
         else: 
             return maxEval 
 
     elif movenumber % 2 == 1:
         minEval = float("inf")
-        legalmoves2 = getLegalMoves() 
+        legalmoves2 = getLegalMoves()
 
-        if len(legalmoves2) != 0: 
+        if board.legal_moves.count() != 0: 
             for index, move in enumerate(legalmoves2): 
-                if move != "" or move != '' or move != "''":
-                    if depth == initial_depth: 
-                        loadBar(index + 1, len(legalmoves2), prefix = 'Progress:', suffix = 'Complete', length = 50)
-                    
-                    board.push_san(move)
-                    eval = minimax(depth - 1, initial_depth, movenumber + 1, alpha, beta)
-                    beta = min(beta, eval)
+                if depth == initial_depth: 
+                    loadBar(index + 1, len(legalmoves2), prefix = 'Progress:', suffix = 'Complete', length = 50)
+                board.push_san(move)
+                eval = minimax(depth - 1, initial_depth, movenumber + 1, alpha, beta)
+                beta = min(beta, eval)
 
-                    if eval < minEval and depth != initial_depth: 
-                        minEval = eval 
+                if eval < minEval and depth != initial_depth: 
+                    minEval = eval 
 
-                    elif eval < minEval and depth == initial_depth: 
-                        minEval = eval 
-                        best_move = move
+                elif eval < minEval and depth == initial_depth: 
+                    minEval = eval 
+                    best_move = move
 
-                    if beta <= alpha and depth != initial_depth:
-                        board.pop()
-                        return minEval
+                if beta <= alpha:
+                    board.pop()
+                    return minEval
 
-                    board.pop() 
+                board.pop() 
         else: 
             return Evaluate(movenumber) 
 
         if depth == initial_depth:
-            print(f"Positions evaluated: {number_evals}, Evaluation: {frmstr(minEval)}", end = "")
+            print(f"Positions evaluated: {number_evals}, Evaluation: {frmstr(minEval)}, depth: {initial_depth}", end = "")
             return best_move
 
         else:
@@ -308,18 +322,24 @@ def drawPieces(string, index, column):
     elif string == "k":
         display.blit(blackKing, ((index)*60, (column)*60))
 
+def findMove(depth, start, movenumber, alpha, beta):
+    move = minimax(depth, depth, movenumber, alpha, beta)
+    if not (time.time() - start > 10):
+        print(" -> searching deeper")
+        move = findMove(depth + 1, start, movenumber, alpha, beta)
+    return move
+
 def main():
     drawBoard()
     printFen(True)
     time.sleep(0.5)
     running = True
     White_Is_Computer = True
-    Black_Is_Computer = False
+    Black_Is_Computer = True
     user_text = ""
     movenumber = 0
     Finished = False
     receiving = True
-    depth = 4
     alpha = -float("inf")
     beta = float("inf")
     global number_evals
@@ -408,10 +428,10 @@ def main():
 
                         if checkmate_status == True:
                             if WhiteToMove:
-                                user_text = "Black won"
+                                user_text = "White won"
                                 Finished = True
                             else:
-                                user_text = "White won"
+                                user_text = "Black won"
                                 Finished = True
                         if repetition_status or insufficient_material_status or threefold_status:
                             user_text = "Draw"
@@ -421,9 +441,11 @@ def main():
                         user_text += event.unicode
 
         if Computer_move and not Finished:
-
+            depth = 4
+            number_evals = 0
             start = time.time()
-            move = minimax(depth, depth, movenumber, alpha, beta)
+            move = findMove(depth, start, movenumber, alpha, beta)
+
             print(f" in: {frmstr(time.time() - start)} seconds")
 
             try:
@@ -441,7 +463,7 @@ def main():
 
             if checkmate_status == True:
 
-                if WhiteToMove:
+                if not  WhiteToMove:
                     user_text = "Black won"
                     Finished = True
                 else:
@@ -462,6 +484,7 @@ def main():
 
         if Finished:
             closing = str(input("Enter anything to close "))
+            print(game)
             running = False
             
 if __name__ == "__main__":
