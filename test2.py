@@ -1,16 +1,28 @@
 import pygame, chess, random, time, math
 from colorama import Fore
 import chess.pgn
-import numpy as np
+
+white_is_computer = input("Enter if white should be played by the computer (Y/N): ")
+if white_is_computer == "Y":
+    white_is_computer = True
+elif white_is_computer == "N":
+    white_is_computer = False
+
+black_is_computer = input("Enter if black should be played by the computer (Y/N): ")
+if black_is_computer == "Y":
+    black_is_computer = True
+elif black_is_computer == "N":
+    black_is_computer = False
 
 display_size_x, display_size_y = 480, 480 + 32
 pygame.init()
 display = pygame.display.set_mode((display_size_x, display_size_y))
 tile_colour_black = (115, 85, 70)
 tile_colour_white = (235, 210, 180)
-base_font = pygame.font.Font(None, 32)
+base_font = pygame.font.Font(r"Font\GothamRoundedMedium_21022.ttf", 32)
 pygame.display.set_caption("Chess")
 number_evals = 0
+
 
 random_fen = "7r/1P2p3/3bB2N/3K2pp/4P3/5PR1/kP2pP2/8 w KQkq - 0 1"
 random_fen2 = "rn1r2k1/pppq2pp/3b1n2/3Pp1N1/5pP1/2N2Q2/PPPP1P1P/R1B1R1K1 w - - 0 1"
@@ -155,7 +167,6 @@ def Evaluate(movenumber):
                                 evaluation += 1
                             if movenumber > 50:
                                 distance = distanceFromCenter(index, columnval)
-                                print(distance)
                                 evaluation -= distance / 4
 
                         elif j == "N":
@@ -186,7 +197,6 @@ def Evaluate(movenumber):
                             if index < 3 or index > 6:
                                 evaluation -= 1
                             if movenumber > 50:
-                                distance = distanceFromCenter(index, columnval)
                                 evaluation += distance / 4
 
                         elif j == "n":
@@ -334,8 +344,6 @@ def main():
     printFen(True)
     time.sleep(0.5)
     running = True
-    White_Is_Computer = True
-    Black_Is_Computer = True
     user_text = ""
     movenumber = 0
     Finished = False
@@ -352,14 +360,14 @@ def main():
         Human_move = False
         Computer_move = False
         if WhiteToMove:
-            if White_Is_Computer:
+            if white_is_computer:
                 Computer_move = True
-            elif Black_Is_Computer:
+            elif black_is_computer:
                 Human_move = True
         else:
-            if Black_Is_Computer:
+            if black_is_computer:
                 Computer_move = True
-            elif White_Is_Computer:
+            elif white_is_computer:
                 Human_move = True
             
         if Human_move and not Finished:
